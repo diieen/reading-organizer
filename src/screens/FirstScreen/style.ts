@@ -3,9 +3,8 @@ import { StyleSheet } from "react-native";
 export const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: "blue",
-        alignItems: "center",
-        justifyContent: "center",
+        backgroundColor: "black",
+        padding: 30
     },
 
     input: {
@@ -14,5 +13,17 @@ export const styles = StyleSheet.create({
         borderColor: "gray",
         borderBottomWidth: 1,
         padding: 10,
+    },
+
+    titleSelectFiles: {
+        fontSize: 20,
+        color: "white",
+        marginBottom: 20,
+        textAlign: "center"
+    },
+
+    filesBox: {
+        flex: 1,
+        marginTop: 40
     }
 })
