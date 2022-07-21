@@ -1,8 +1,9 @@
 import { Text, SafeAreaView, StatusBar, Button, View } from 'react-native';
-import React, { useCallback, useState, useEffect } from 'react';
+import React, { useCallback, useState, useEffect, useMemo } from 'react';
 import * as DocumentPicker from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system';
 import * as IntentLauncher from 'expo-intent-launcher';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { styles } from './style'
 
@@ -14,8 +15,13 @@ interface props {
 export function FirstScreen() {
     const [fileResponse, setFileResponse] = useState<any>([]);
     const [uri, setUri] = useState<string>("");
+    const [control, setControl] = useState<boolean>(false);
 
-    const files : Array<object> = []
+    useEffect(() => {
+        AsyncStorage.getItem('fileResponse').then((value: any) => {
+            setFileResponse(JSON.parse(value))
+        })
+    }, [])
 
     const openFile = async (file: string) => {
         const cUri = await FileSystem.getContentUriAsync(file);
@@ -26,24 +32,39 @@ export function FirstScreen() {
         });
     }
 
-    const handleDocumentSelection = useCallback(async () => {
+    const handleDocumentSelection = async () => {
         try {
             const response: any = await DocumentPicker.getDocumentAsync({
                 type: 'application/pdf',
             });
+
+            fileResponse.push({ name: response.name, uri: response.uri })
+            setFileResponse(fileResponse);
+
+            let object = JSON.stringify(fileResponse);
+            AsyncStorage.setItem('fileResponse', object);
+
             FileSystem.getContentUriAsync(response.uri).then(cUri => {
                 setUri(cUri);
             });
-            files.push({ name: response.name, uri: response.uri })
-            setFileResponse(files);
         } catch (err) {
             console.warn(err);
         }
-    }, []);
+    };
 
-    // useEffect(() => {
-    //     console.log(fileResponse)
-    // }, [fileResponse])
+    const deleteFile = async (i: number) => {
+        fileResponse.splice(i, 1);
+        
+        let object = JSON.stringify(fileResponse);
+        AsyncStorage.setItem('fileResponse', object);
+
+        setFileResponse(fileResponse);
+        if (control) {
+            setControl(false);
+        } else {
+            setControl(true);
+        }
+    };
 
     return (
         <SafeAreaView style={styles.container}>
@@ -57,7 +78,10 @@ export function FirstScreen() {
                     fileResponse && (
                         fileResponse?.map((file: props, index: number) => {
                             return (
-                                <Button key={index} title={file.name} color="#5e5e5e" onPress={() => openFile(file.uri)} />
+                                <View key={index}>
+                                    <Button title={file.name} color="#5e5e5e" onPress={() => openFile(file.uri)} />
+                                    <Button title="❌" color="red" onPress={() => deleteFile(index)} />
+                                </View>
                             )
                         })
                     )
